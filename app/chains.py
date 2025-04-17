@@ -23,7 +23,6 @@ class Chain:
         )
         chain_extract = prompt_extract | self.model
         res = chain_extract.invoke(input={"cleaned_text": cleaned_text})
-        #print(res)
         try:
             json_parser = JsonOutputParser()
             res = json_parser.parse(res.content)

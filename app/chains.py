@@ -1,20 +1,15 @@
 import os
-from langchain_groq import ChatGroq
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.exceptions import OutputParserException
 from dotenv import load_dotenv
 
-load_dotenv()
-groq_api_key = os.getenv("GROQ_API_KEY")
-
-
 class Chain:
     def __init__(self):
-        self.groq_api_key = groq_api_key
-        self.model = ChatGroq(
-            model_name="llama-3.3-70b-versatile", api_key=groq_api_key
-        )
+        self.model = ChatOllama(model="gemma3:12b")
+        self.json_parser = JsonOutputParser()
+        self.str_parser = StrOutputParser()
 
     def extract_jobs(self, cleaned_text):
         prompt_extract = PromptTemplate.from_template(
@@ -28,6 +23,7 @@ class Chain:
         )
         chain_extract = prompt_extract | self.model
         res = chain_extract.invoke(input={"cleaned_text": cleaned_text})
+        #print(res)
         try:
             json_parser = JsonOutputParser()
             res = json_parser.parse(res.content)
@@ -47,10 +43,10 @@ class Chain:
 
             Generate 7 interview questions based on the job details provided. The questions should be relevant to the role and skills required. Include a mix of technical and behavioral questions.
 
-            Return the questions as a numbered list.
+            Return the questions as a numbered list. No preamble and no postamble.
             """
         )
-        chain_questions = prompt_questions | self.model
+        chain_questions = prompt_questions | self.model | self.str_parser
         try:
             questions = chain_questions.invoke(
                 {
@@ -78,9 +74,9 @@ class Chain:
 
             portfolio: {portfolio}
 
-            Imagine you are a candidate applying for the job described above. Your task is to generate clear and concise answers to the interview questions provided. Use projects from your portfolio to support your answers. The answers should be relevant to the job.
+            Imagine you are a candidate applying for the job described above. Your task is to generate clear and concise answers to the interview questions provided. Use projects from your portfolio to support your answers if possible. 
 
-            Return the answers as a dictionary with the question as the key and the answer as the value.
+            Return the answers as a numbered list, mirroring the order of the questions. No preamble and no postamble.
             """
         )
         chain_answers = prompt_answers | self.model | self.str_parser
@@ -99,7 +95,7 @@ class Chain:
                     "experience": job_details.get("experience", "N/A"),
                     "skills": ", ".join(job_details.get("skills", [])),
                     "description": job_details.get("description", "N/A"),
-                    "portfolio_context": portfolio_str,
+                    "portfolio": portfolio_str,
                 }
             )
             return answers

@@ -25,11 +25,11 @@ def create_app(model, portfolio, clean_text):
 
             st.subheader("Interview Questions:")
             questions = model.generate_questions(job)
-            st.code(questions, language="markdown")
+            st.markdown(questions)
 
             st.subheader("Interview Question Answers:")
             answers = model.generate_answers(questions, job, projects)
-            st.code(answers, language="markdown")
+            st.markdown(answers)
 
 
 if __name__ == "__main__":

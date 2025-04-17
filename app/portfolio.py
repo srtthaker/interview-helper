@@ -20,6 +20,9 @@ class Portfolio:
                 )
 
     def query_portfolio(self, skills):
+        if not skills:
+            return []
+
         return self.collection.query(query_texts=skills, n_results=2).get(
             "metadatas", []
         )
